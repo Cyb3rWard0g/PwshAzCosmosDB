@@ -45,6 +45,7 @@ $RECYCLE.BIN/
 
 # VS Code folders
 .vscode/
+.vs/
 
 # Windows Installer files
 *.cab
@@ -92,6 +93,7 @@ Desktop.ini
 # Compiled binary files
 bin/
 obj/
+build/
 
 # NuGet packages
 *.nupkg

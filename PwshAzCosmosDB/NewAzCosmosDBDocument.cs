@@ -8,13 +8,13 @@ namespace PwshAzCosmosDB
     public class NewAzCosmosDBDocument : PSCmdlet
     {
         [Parameter(Mandatory = true)]
-        public Hashtable? Document { get; set; }
+        public Hashtable Document { get; set; }
 
-        [Parameter(Mandatory = false)]
-        public string? PartitionKey { get; set; }
+        [Parameter(Mandatory = true)]
+        public string PartitionKeyField { get; set; }  // Field name of the partition key
 
-        [Parameter(Mandatory = false)]
-        public string? DocumentId { get; set; }
+        [Parameter(Mandatory = true)]
+        public string PartitionKeyValue { get; set; }  // Value of the partition key
 
         protected override void ProcessRecord()
         {
@@ -22,7 +22,7 @@ namespace PwshAzCosmosDB
 
             try
             {
-                // Retrieve the Cosmos container from session state
+                WriteVerbose("[+] Retrieving the Cosmos container from session state...");
                 var container = SessionState.PSVariable.Get("AzCosmosDBContainer").Value as Container;
                 if (container == null)
                 {
@@ -30,25 +30,16 @@ namespace PwshAzCosmosDB
                         "ContainerNotFound", ErrorCategory.ResourceUnavailable, null));
                 }
 
-                // Create a PartitionKey object based on the provided or default value
-                var partitionKeyValue = string.IsNullOrEmpty(PartitionKey) ? Document?.ToString() : PartitionKey;
-                var partitionKey = new PartitionKey(partitionKeyValue);
+                WriteVerbose($"[+] Creating the new document in the container with PartitionKeyField '{PartitionKeyField}'...");
 
                 // Create the new document in the container
-                Hashtable? documentToCreate = null;
-                if (Document != null)
-                {
-                    documentToCreate = new Hashtable(Document);
-                    if (!string.IsNullOrEmpty(DocumentId))
-                    {
-                        documentToCreate["id"] = DocumentId;
-                    }
-                }
+                var documentToCreate = new Hashtable(Document);
+                documentToCreate[PartitionKeyField] = PartitionKeyValue;
 
-                var createResponse = container.CreateItemAsync(documentToCreate, partitionKey);
-                if (createResponse.Result.StatusCode == System.Net.HttpStatusCode.Created)
+                var createResponse = container.CreateItemAsync(documentToCreate, new PartitionKey(PartitionKeyValue)).GetAwaiter().GetResult();
+                if (createResponse.StatusCode == System.Net.HttpStatusCode.Created)
                 {
-                    WriteVerbose("Document created successfully.");
+                    WriteVerbose("[+] Document created successfully.");
                 }
                 else
                 {

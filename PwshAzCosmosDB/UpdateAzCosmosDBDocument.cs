@@ -1,23 +1,26 @@
-using System;
 using System.Collections;
-using System.Linq;
 using System.Management.Automation;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace PwshAzCosmosDB
 {
     [Cmdlet(VerbsData.Update, "AzCosmosDBDocument")]
-    [OutputType(typeof(object))] // Change object to your document type
+    [OutputType(typeof(JObject))]
     public class UpdateAzCosmosDBDocument : PSCmdlet
     {
         [Parameter(Mandatory = true)]
-        public string? DocumentId { get; set; }
+        public string DocumentId { get; set; }
 
         [Parameter(Mandatory = true)]
-        public Hashtable? Updates { get; set; } // Hashtable of property updates
+        public Hashtable Updates { get; set; }
 
-        [Parameter(Mandatory = false)]
-        public string? PartitionKey { get; set; }
+        [Parameter(Mandatory = true)]
+        public string PartitionKeyField { get; set; }
+
+        [Parameter(Mandatory = true)]
+        public string PartitionKeyValue { get; set; }
 
         protected override void ProcessRecord()
         {
@@ -25,46 +28,20 @@ namespace PwshAzCosmosDB
 
             try
             {
-                // Retrieve the existing document using Get-AzCosmosDBDocument cmdlet
-                var getDocumentCmdlet = new GetAzCosmosDBDocument
+                WriteVerbose("[+] Updating input updates with Id and partition context...");
+                // Add the "id" property to Updates hashtable if it doesn't exist
+                if (!Updates.ContainsKey("id"))
                 {
-                    DocumentId = DocumentId,
-                    PartitionKey = PartitionKey
-                };
-                var existingDocuments = getDocumentCmdlet.Invoke<object>();
-
-                var existingDocument = existingDocuments.SingleOrDefault();
-
-                if (existingDocument == null)
-                {
-                    ThrowTerminatingError(new ErrorRecord(new PSInvalidOperationException("Document not found."),
-                        "DocumentNotFound", ErrorCategory.ObjectNotFound, null));
+                    Updates.Add("id", DocumentId);
                 }
 
-                // Apply updates to the existing document
-                if (Updates != null)
-                {
-                    foreach (var key in Updates.Keys)
-                    {
-                        var propertyName = key.ToString();
-                        
-                        if (!string.IsNullOrEmpty(propertyName))
-                        {
-                            var property = existingDocument.GetType().GetProperty(propertyName);
-                            if (property != null)
-                            {
-                                property.SetValue(existingDocument, Updates[key]);
-                            }
-                            else
-                            {
-                                // Handle property not found case
-                                WriteWarning($"Property '{propertyName}' not found in the document.");
-                            }
-                        }
-                    }
+                // Add partition key field and value to Updates hashtable if provided
+                if (!Updates.ContainsKey(PartitionKeyField)){
+                    Updates.Add(PartitionKeyField, PartitionKeyValue);
                 }
 
                 // Retrieve the Cosmos container from session state
+                WriteVerbose("[+] Retrieving the Cosmos container from session state...");
                 var container = SessionState.PSVariable.Get("AzCosmosDBContainer").Value as Container;
                 if (container == null)
                 {
@@ -73,12 +50,36 @@ namespace PwshAzCosmosDB
                 }
 
                 // Create a PartitionKey object based on the provided or default value
-                var partitionKeyValue = string.IsNullOrEmpty(PartitionKey) ? DocumentId : PartitionKey;
-                var partitionKey = new PartitionKey(partitionKeyValue);
+                var partitionKey = new PartitionKey(PartitionKeyValue);
 
-                // Update the document in the container
-                var updateResponse = container.ReplaceItemAsync(existingDocument, DocumentId, partitionKey);
-                var updatedDocument = updateResponse.Result.Resource;
+                // Retrieve the document by its ID and partition key
+                var response = container.ReadItemAsync<object>(DocumentId, partitionKey).GetAwaiter().GetResult();
+                var documentResponse = response;
+
+                WriteVerbose("[+] Successfully retrieved existing document.");
+                // Parse the JSON string into a JObject
+                // https://github.com/PowerShell/PowerShell/issues/10650
+                var documentJObject = JObject.Parse(documentResponse.Resource.ToString());
+
+                // Convert the JObject to a dictionary
+                var documentDictionary = documentJObject.ToObject<Dictionary<string, object>>();
+
+                WriteVerbose("[+] Updating document locally ..");
+                foreach (var key in Updates.Keys)
+                {
+                    var propertyName = key.ToString();
+
+                    if (!string.IsNullOrEmpty(propertyName))
+                    {
+                        documentDictionary[propertyName] = Updates[key];
+                    }
+                }
+
+                WriteVerbose($"[+] Updating document with ID: {DocumentId}...");
+                var updateResponse = container.ReplaceItemAsync(Updates, DocumentId, partitionKey).GetAwaiter().GetResult();
+                var updatedDocument = updateResponse.Resource;
+
+                WriteVerbose("[+] Document updated successfully.");
 
                 // Return the updated document
                 WriteObject(updatedDocument);

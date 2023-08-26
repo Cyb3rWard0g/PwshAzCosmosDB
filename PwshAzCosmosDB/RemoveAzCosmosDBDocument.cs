@@ -8,10 +8,10 @@ namespace PwshAzCosmosDB
     public class RemoveAzCosmosDBDocument : PSCmdlet
     {
         [Parameter(Mandatory = true)]
-        public string? DocumentId { get; set; }
+        public string DocumentId { get; set; }
 
         [Parameter(Mandatory = false)]
-        public string? PartitionKey { get; set; }
+        public string PartitionKey { get; set; }
 
         protected override void ProcessRecord()
         {
@@ -19,7 +19,7 @@ namespace PwshAzCosmosDB
 
             try
             {
-                // Retrieve the Cosmos container from session state
+                WriteVerbose("[+] Retrieving the Cosmos container from session state...");
                 var container = SessionState.PSVariable.Get("AzCosmosDBContainer").Value as Container;
                 if (container == null)
                 {
@@ -31,11 +31,13 @@ namespace PwshAzCosmosDB
                 var partitionKeyValue = string.IsNullOrEmpty(PartitionKey) ? DocumentId : PartitionKey;
                 var partitionKey = new PartitionKey(partitionKeyValue);
 
+                WriteVerbose("[+] Deleting the document from the container...");
+
                 // Delete the document from the container
-                var deleteResponse = container.DeleteItemAsync<object>(DocumentId, partitionKey);
-                if (deleteResponse.Result.StatusCode == System.Net.HttpStatusCode.NoContent)
+                var deleteResponse = container.DeleteItemAsync<object>(DocumentId, partitionKey).GetAwaiter().GetResult();
+                if (deleteResponse.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
-                    WriteVerbose("Document deleted successfully.");
+                    WriteVerbose("[+] Document deleted successfully.");
                 }
                 else
                 {

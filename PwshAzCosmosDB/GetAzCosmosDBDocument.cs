@@ -1,17 +1,18 @@
 using System.Management.Automation;
 using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Linq;
 
 namespace PwshAzCosmosDB
 {
     [Cmdlet(VerbsCommon.Get, "AzCosmosDBDocument")]
-    [OutputType(typeof(object))] // Change object to your document type
+    [OutputType(typeof(JObject))]
     public class GetAzCosmosDBDocument : PSCmdlet
     {
         [Parameter(Mandatory = true)]
-        public string? DocumentId { get; set; }
+        public string DocumentId { get; set; }
 
         [Parameter(Mandatory = false)]
-        public string? PartitionKey { get; set; }
+        public string PartitionKey { get; set; }
 
         protected override void ProcessRecord()
         {
@@ -21,22 +22,32 @@ namespace PwshAzCosmosDB
             var container = SessionState.PSVariable.Get("AzCosmosDBContainer").Value as Container;
             if (container == null)
             {
-                ThrowTerminatingError(new ErrorRecord(new PSInvalidOperationException("Container not found in session state."),
+                WriteVerbose("[+] Container not found in session state.");
+                ThrowTerminatingError(new ErrorRecord(
+                    new PSInvalidOperationException("Container not found in session state."),
                     "ContainerNotFound", ErrorCategory.ResourceUnavailable, null));
             }
 
+            WriteVerbose("[+] Successfully retrieved the Cosmos container from session state.");
+            WriteVerbose($"[+] Container Name: {container.Id}");
+            WriteVerbose($"[+] Database Name: {container.Database.Id}");
+
             try
             {
-                // Create a PartitionKey object based on the provided or default value
                 var partitionKeyValue = string.IsNullOrEmpty(PartitionKey) ? DocumentId : PartitionKey;
                 var partitionKey = new PartitionKey(partitionKeyValue);
 
-                // Retrieve the document by its ID and partition key
-                var response = container.ReadItemAsync<object>(DocumentId, partitionKey);
-                var document = response.Result;
+                WriteVerbose("[+] Retrieving the document...");
 
-                // Return the retrieved document
-                WriteObject(document);
+                // Retrieve the document by its ID and partition key
+                var response = container.ReadItemAsync<object>(DocumentId, partitionKey).GetAwaiter().GetResult();
+                var documentResponse = response;
+
+                WriteVerbose("[+] Successfully retrieved the document.");
+
+                // Now you can safely write to the pipeline
+                // https://github.com/PowerShell/PowerShell/issues/10650
+                WriteObject(documentResponse.Resource.ToString());
             }
             catch (CosmosException ex)
             {

@@ -12,7 +12,7 @@
 RootModule = 'PwshAzCosmosDB.dll'
 
 # Version number of this module.
-ModuleVersion = '1.0.0'
+ModuleVersion = '1.0.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -51,7 +51,7 @@ Description = 'PowerShell module for Azure CosmosDB document operations'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @("Azure.Identity", "Microsoft.Azure.Cosmos")
+# RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -72,9 +72,7 @@ RequiredModules = @("Azure.Identity", "Microsoft.Azure.Cosmos")
 FunctionsToExport = @()
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = 'Connect-AzCosmosDB', 'Get-AzCosmosDBDocument', 
-               'Update-AzCosmosDBDocument', 'Delete-AzCosmosDBDocument', 
-               'New-AzCosmosDBDocument'
+CmdletsToExport = @('Connect-AzCosmosDB', 'Get-AzCosmosDBDocument','Update-AzCosmosDBDocument', 'Delete-AzCosmosDBDocument','New-AzCosmosDBDocument')
 
 # Variables to export from this module
 VariablesToExport = '*'
