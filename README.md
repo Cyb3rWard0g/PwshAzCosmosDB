@@ -6,7 +6,6 @@ PwshAzCosmosDB is a PowerShell module that provides cmdlets, written in C#, for 
 
 `PwshAzCosmosDB` depends on the following NuGet packages:
 
-- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity/) (Version 1.10.0)
 - [Microsoft.Azure.Cosmos](https://www.nuget.org/packages/Microsoft.Azure.Cosmos/) (Version 3.35.3)
 - [PowerShellStandard.Library](https://www.nuget.org/packages/PowerShellStandard.Library/) (Version 5.1.1)
 - [dnMerge](https://www.nuget.org/packages/dnMerge/) (Version 0.5.15)
