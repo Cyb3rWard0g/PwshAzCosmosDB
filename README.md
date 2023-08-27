@@ -18,7 +18,7 @@ Note that the `dnMerge` package is used to merge multiple NuGet packages into a 
 To install the [PwshAzCosmosDB module](https://www.powershellgallery.com/packages/PwshAzCosmosDB), you can use the PowerShell Gallery:
 
 ```powershell
-Install-Module -Name PwshAzCosmosDB -Scope CurrentUser
+Install-Module -Name PwshAzCosmosDB -Scope CurrentUser -verbose
 ```
 
 ## Usage
