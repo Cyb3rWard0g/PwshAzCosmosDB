@@ -85,7 +85,6 @@ namespace PwshAzCosmosDB
 
                                     Dictionary<string, string> oauthResults = JsonConvert.DeserializeObject<Dictionary<string, string>>(stringResponse);
                                     accessToken = oauthResults["access_token"];
-                                    WriteObject(accessToken);
                                 }
                             }
                         }
