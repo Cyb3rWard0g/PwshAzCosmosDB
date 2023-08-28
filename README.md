@@ -84,7 +84,7 @@ $pkValue = '<partition-key-value>'
 $updatesHashtable = @{
     "testField" = "testvalue"
 }
-Update-AzCosmosDBDocument -DocumentId $documentId-Updates $updatesHashtable -PartitionKeyField $pkField -PartitionKeyValue $pkValue -verbose
+Update-AzCosmosDBDocument -DocumentId $documentId -Updates $updatesHashtable -PartitionKeyField $pkField -PartitionKeyValue $pkValue -verbose
 ```
 
 ### Delete a document from Azure Cosmos DB
