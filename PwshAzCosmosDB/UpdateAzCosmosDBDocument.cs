@@ -2,7 +2,6 @@ using System.Collections;
 using System.Management.Automation;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace PwshAzCosmosDB
 {
@@ -26,29 +25,22 @@ namespace PwshAzCosmosDB
         {
             base.ProcessRecord();
 
-            try
+            WriteVerbose("[+] Updating input updates with Id and partition context...");
+            // Add the "id" property to Updates hashtable if it doesn't exist
+            if (!Updates.ContainsKey("id"))
             {
-                WriteVerbose("[+] Updating input updates with Id and partition context...");
-                // Add the "id" property to Updates hashtable if it doesn't exist
-                if (!Updates.ContainsKey("id"))
-                {
-                    Updates.Add("id", DocumentId);
-                }
+                Updates.Add("id", DocumentId);
+            }
 
-                // Add partition key field and value to Updates hashtable if provided
-                if (!Updates.ContainsKey(PartitionKeyField)){
-                    Updates.Add(PartitionKeyField, PartitionKeyValue);
-                }
+            // Add partition key field and value to Updates hashtable if provided
+            if (!Updates.ContainsKey(PartitionKeyField)){
+                Updates.Add(PartitionKeyField, PartitionKeyValue);
+            }
 
-                // Retrieve the Cosmos container from session state
-                WriteVerbose("[+] Retrieving the Cosmos container from session state...");
-                var container = SessionState.PSVariable.Get("AzCosmosDBContainer").Value as Container;
-                if (container == null)
-                {
-                    ThrowTerminatingError(new ErrorRecord(new PSInvalidOperationException("Container not found in session state."),
-                        "ContainerNotFound", ErrorCategory.ResourceUnavailable, null));
-                }
-
+            // Retrieve the Cosmos container from session state
+            WriteVerbose("[+] Retrieving the Cosmos container from session state...");
+            if (SessionState.PSVariable.Get("AzCosmosDBContainer").Value is Container container)
+            {
                 // Create a PartitionKey object based on the provided or default value
                 var partitionKey = new PartitionKey(PartitionKeyValue);
 
@@ -68,25 +60,40 @@ namespace PwshAzCosmosDB
                 foreach (var key in Updates.Keys)
                 {
                     var propertyName = key.ToString();
-
+                    
                     if (!string.IsNullOrEmpty(propertyName))
                     {
-                        documentDictionary[propertyName] = Updates[key];
+                        if (documentDictionary.ContainsKey(propertyName))
+                        {
+                            documentDictionary[propertyName] = Updates[key];
+                        }
+                        else
+                        {
+                            documentDictionary.Add(propertyName, Updates[key]);
+                        }
                     }
                 }
 
                 WriteVerbose($"[+] Updating document with ID: {DocumentId}...");
-                var updateResponse = container.ReplaceItemAsync(Updates, DocumentId, partitionKey).GetAwaiter().GetResult();
-                var updatedDocument = updateResponse.Resource;
+                try
+                {
+                    var updateResponse = container.ReplaceItemAsync(documentDictionary, DocumentId, partitionKey).GetAwaiter().GetResult();
+                    var updatedDocument = updateResponse.Resource;
 
-                WriteVerbose("[+] Document updated successfully.");
+                    WriteVerbose("[+] Document updated successfully.");
 
-                // Return the updated document
-                WriteObject(updatedDocument);
+                    // Return the updated document
+                    WriteObject(updatedDocument);
+                }
+                catch (CosmosException ex)
+                {
+                    WriteError(new ErrorRecord(ex, "CosmosUpdateDocumentError", ErrorCategory.WriteError, this));
+                }
             }
-            catch (CosmosException ex)
+            else
             {
-                WriteError(new ErrorRecord(ex, "CosmosUpdateDocumentError", ErrorCategory.WriteError, this));
+                ThrowTerminatingError(new ErrorRecord(new PSInvalidOperationException("Container not found in session state."),
+                    "ContainerNotFound", ErrorCategory.ResourceUnavailable, null));
             }
         }
     }

@@ -12,10 +12,10 @@
 RootModule = 'PwshAzCosmosDB.dll'
 
 # Version number of this module.
-ModuleVersion = '1.0.4'
+ModuleVersion = '1.0.5'
 
 # Supported PSEditions
-# CompatiblePSEditions = @()
+CompatiblePSEditions = @('Core')
 
 # ID used to uniquely identify this module
 GUID = '1b93a2a5-3194-4bfb-8639-76e29d9158ca'
@@ -33,7 +33,7 @@ Copyright = 'Copyright (c) 2023 Cyb3rWard0g'
 Description = 'PowerShell module for Azure CosmosDB document operations'
 
 # Minimum version of the PowerShell engine required by this module
-# PowerShellVersion = ''
+PowerShellVersion = '7.0'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''

@@ -1,13 +1,14 @@
 # PwshAzCosmosDB
 
-PwshAzCosmosDB is a PowerShell module that provides cmdlets, written in C#, for performing document-level operations against Azure Cosmos DB. This module is designed to fill the gap left by the lack of document-level operations in the existing [Az.CosmosDB module](https://learn.microsoft.com/en-us/powershell/module/az.cosmosdb/?view=azps-10.2.0).
+PwshAzCosmosDB is a PowerShell binary module built using .NET Core and designed to work with PowerShell Core. It provides cmdlets, written in C#, for performing document-level operations against Azure Cosmos DB. This module is designed to fill the gap left by the lack of document-level operations in the existing [Az.CosmosDB module](https://learn.microsoft.com/en-us/powershell/module/az.cosmosdb/?view=azps-10.2.0).
 
 ## Dependencies
 
 `PwshAzCosmosDB` depends on the following NuGet packages:
 
+- [Azure.Identity](https://www.nuget.org/packages/Microsoft.Azure.Cosmos/) (Version 1.10.0)
 - [Microsoft.Azure.Cosmos](https://www.nuget.org/packages/Microsoft.Azure.Cosmos/) (Version 3.35.3)
-- [PowerShellStandard.Library](https://www.nuget.org/packages/PowerShellStandard.Library/) (Version 5.1.1)
+- [PowerShellStandard.Library](https://www.nuget.org/packages/PowerShellStandard.Library/) (Version 7.0.0-preview.1)
 - [dnMerge](https://www.nuget.org/packages/dnMerge/) (Version 0.5.15)
 
 Note that the `dnMerge` package is used to merge multiple NuGet packages into a single assembly to improve module compatibility.
@@ -24,9 +25,11 @@ Install-Module -Name PwshAzCosmosDB -Scope CurrentUser -verbose
 
 `PwshAzCosmosDB` provides cmdlets for various document-level operations, including creating, reading, updating, and deleting documents in Azure Cosmos DB.
 
-### Examples
+### Initialize Cosmos Client
 
 first you need to connect to the Azure CosmosDB
+
+#### Master Key
 
 ```powershell
 $params = @{
@@ -39,32 +42,55 @@ $params = @{
 Connect-AzCosmosDB @params
 ```
 
-#### Create a new document in Azure Cosmos DB
+#### User Assigned Managed Identity
 
 ```powershell
-New-AzCosmosDBDocument -Document $documentHashtable -PartitionKey "<PartitionKeyValue>" -verbose
+$env:MANAGED_IDENTITY_CLIENT_ID = '<user-assigned-managed-identity-client-id'
+
+$params = @{
+    "Endpoint" = "https://<CosmosDB-Name>.documents.azure.com:443/"
+    "DatabaseName" = "<DB-Name>"
+    "ContainerName" = "<Container-Name>"
+    "Verbose" = $true
+}
+Connect-AzCosmosDB @params
 ```
 
-#### Update an existing document in Azure Cosmos DB
+### Retrieve an existing document from Azure Cosmos DB
 
 ```powershell
+Get-AzCosmosDBDocument -DocumentId "document-id" -PartitionKey "<PartitionKeyValue>" -verbose
+```
+
+### Create a new document in Azure Cosmos DB
+
+```powershell
+$pkField = '<partition-key-field-name>'
+$pkValue = '<partition-key-value>'
+$documentHashtable = @{
+    "title" = "New Title"
+    "description" = "This is a new document"
+    "author" = "Roberto Rodriguez"
+}
+New-AzCosmosDBDocument -Document $documentHashTable -PartitionKeyField $pkField -PartitionKeyValue $pkValue -verbose
+```
+
+### Update an existing document in Azure Cosmos DB
+
+```powershell
+$documentId = '<document-id>'
+$pkField = '<partition-key-field-name>'
+$pkValue = '<partition-key-value>'
 $updatesHashtable = @{
     "testField" = "testvalue"
 }
-Update-AzCosmosDBDocument -DocumentId "document-id" -Updates $updatesHashtable -PartitionKey "<PartitionKeyValue>" -verbose
+Update-AzCosmosDBDocument -DocumentId $documentId-Updates $updatesHashtable -PartitionKeyField $pkField -PartitionKeyValue $pkValue -verbose
 ```
 
-#### Delete a document from Azure Cosmos DB
+### Delete a document from Azure Cosmos DB
 
 ```powershell
 Remove-AzCosmosDBDocument -DocumentId "document-id" -PartitionKey "<PartitionKeyValue>" -verbose
-```
-
-#### Retrieve an existing document from Azure Cosmos DB
-
-```powershell
-
-Get-AzCosmosDBDocument -DocumentId "document-id" -PartitionKey "<PartitionKeyValue>" -verbose
 ```
 
 ## Contributing

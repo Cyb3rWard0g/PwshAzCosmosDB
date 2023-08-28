@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Management.Automation;
 using Microsoft.Azure.Cosmos;
@@ -20,35 +21,43 @@ namespace PwshAzCosmosDB
         {
             base.ProcessRecord();
 
-            try
+            WriteVerbose("[+] Retrieving the Cosmos container from session state...");
+            if (SessionState.PSVariable.Get("AzCosmosDBContainer").Value is Container container)
             {
-                WriteVerbose("[+] Retrieving the Cosmos container from session state...");
-                var container = SessionState.PSVariable.Get("AzCosmosDBContainer").Value as Container;
-                if (container == null)
-                {
-                    ThrowTerminatingError(new ErrorRecord(new PSInvalidOperationException("Container not found in session state."),
-                        "ContainerNotFound", ErrorCategory.ResourceUnavailable, null));
-                }
-
                 WriteVerbose($"[+] Creating the new document in the container with PartitionKeyField '{PartitionKeyField}'...");
 
                 // Create the new document in the container
                 var documentToCreate = new Hashtable(Document);
                 documentToCreate[PartitionKeyField] = PartitionKeyValue;
 
-                var createResponse = container.CreateItemAsync(documentToCreate, new PartitionKey(PartitionKeyValue)).GetAwaiter().GetResult();
-                if (createResponse.StatusCode == System.Net.HttpStatusCode.Created)
+                if (!documentToCreate.ContainsKey("id"))
                 {
-                    WriteVerbose("[+] Document created successfully.");
+                    Guid guid = Guid.NewGuid();
+                    string guidString = guid.ToString();
+                    documentToCreate["id"] = guidString;
                 }
-                else
+
+                try
                 {
-                    WriteWarning("Failed to create document.");
+                    var createResponse = container.CreateItemAsync(documentToCreate, new PartitionKey(PartitionKeyValue)).GetAwaiter().GetResult();
+                    if (createResponse.StatusCode == System.Net.HttpStatusCode.Created)
+                    {
+                        WriteVerbose("[+] Document created successfully.");
+                    }
+                    else
+                    {
+                        WriteWarning("[!] Failed to create document.");
+                    }
+                }
+                catch (CosmosException ex)
+                {
+                    WriteError(new ErrorRecord(ex, "CosmosCreateDocumentError", ErrorCategory.WriteError, this));
                 }
             }
-            catch (CosmosException ex)
+            else
             {
-                WriteError(new ErrorRecord(ex, "CosmosCreateDocumentError", ErrorCategory.WriteError, this));
+                ThrowTerminatingError(new ErrorRecord(new PSInvalidOperationException("Container not found in session state."),
+                    "ContainerNotFound", ErrorCategory.ResourceUnavailable, null));
             }
         }
     }
