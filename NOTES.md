@@ -38,7 +38,7 @@ dotnet new sln
 dotnet sln add "$($module).csproj"
 ```
 
-## Add dnMerge Reference and 
+## Add dnMerge Reference
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -57,9 +57,9 @@ dotnet sln add "$($module).csproj"
 </Project>
 ```
 
-## Make Sure Dependency DLLs are also Built
+## Make Sure Dependencies / References are also Built
 
-Add `<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>` to your property group.
+Add `<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>` to your property group section.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -91,6 +91,8 @@ dotnet build --configuration Release
 
 ## Import Module Locally
 
+You can test your PowerShell binary module with all the references because of this property `<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>` in your `.csproj` file. Run the following command:
+
 ```powershell
 Import-Module PwshAzCosmosDB\bin\Release\net7.0\PwshAzCosmosDB.dll
 ```
@@ -99,7 +101,6 @@ Import-Module PwshAzCosmosDB\bin\Release\net7.0\PwshAzCosmosDB.dll
 
 * Create `output\PwshAzCosmosDB` directory
 * Copy `PwshAzCosmosDB.dll` and `PwshAzCosmosDB.psd1` files to `output\PwshAzCosmosDB`
-* Switch directory tp `output` directory
 * Publish module to PSGallery with the following commands:
 
 ```powershell
