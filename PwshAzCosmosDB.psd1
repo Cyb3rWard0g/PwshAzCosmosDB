@@ -12,7 +12,7 @@
 RootModule = 'PwshAzCosmosDB.dll'
 
 # Version number of this module.
-ModuleVersion = '1.0.5'
+ModuleVersion = '1.0.6'
 
 # Supported PSEditions
 CompatiblePSEditions = @('Core')
@@ -72,7 +72,7 @@ PowerShellVersion = '7.0'
 FunctionsToExport = @()
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = @('Connect-AzCosmosDB', 'Get-AzCosmosDBDocument','Update-AzCosmosDBDocument', 'Delete-AzCosmosDBDocument','New-AzCosmosDBDocument')
+CmdletsToExport = @('Connect-AzCosmosDB', 'Get-AzCosmosDBDocument','Update-AzCosmosDBDocument', 'Remove-AzCosmosDBDocument','New-AzCosmosDBDocument')
 
 # Variables to export from this module
 VariablesToExport = '*'
