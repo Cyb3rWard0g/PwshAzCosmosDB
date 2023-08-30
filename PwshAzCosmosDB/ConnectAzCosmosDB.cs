@@ -21,6 +21,9 @@ namespace PwshAzCosmosDB
         [Parameter(Mandatory = false)]
         public string? MasterKey { get; set; }
 
+        [Parameter]
+        public SwitchParameter Force { get; set; }
+
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
@@ -81,8 +84,8 @@ namespace PwshAzCosmosDB
                     WriteVerbose($"[+] Container Name: {container.Id}");
                     WriteVerbose($"[+] Database Name: {container.Database.Id}");
 
-                    // Check if the container is already stored in the session state
-                    if (SessionState.PSVariable.Get("AzCosmosDBContainer") == null)
+                    // Check if the container is already stored in the session state or force it
+                    if (Force || SessionState.PSVariable.Get("AzCosmosDBContainer") == null)
                     {
                         // Store the container in session state for later cmdlets to access
                         WriteVerbose("[+] Storing the container in session state...");
