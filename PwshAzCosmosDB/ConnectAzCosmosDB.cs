@@ -43,13 +43,20 @@ namespace PwshAzCosmosDB
                     }
                     else
                     {
-
-                        // Use managed identity authentication
-                        WriteVerbose("[+] Using managed identity context...");
                         var managedIdentityClientId = Environment.GetEnvironmentVariable("MANAGED_IDENTITY_CLIENT_ID");
-                        
-                        cosmosClient = new CosmosClient(Endpoint,
-                            managedIdentityClientId == null ? new DefaultAzureCredential() : new ManagedIdentityCredential(managedIdentityClientId));
+
+                        if (string.IsNullOrEmpty(managedIdentityClientId))
+                        {
+                            // https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet&preserve-view=true#defaultazurecredential
+                            WriteVerbose("[+] Using ChainedTokenCredential: AzurePowerShellCredential -> AzureCliCredential -> ManagedIdentityCredential");
+                            cosmosClient = new CosmosClient(Endpoint, new ChainedTokenCredential(new AzurePowerShellCredential(), new AzureCliCredential(), new ManagedIdentityCredential()));
+                        }
+                        else
+                        {
+                            // Use ManagedIdentityCredential with the provided client ID
+                            WriteVerbose($"[+] Using ManagedIdentityCredential with identity: {managedIdentityClientId}");
+                            cosmosClient = new CosmosClient(Endpoint, new ManagedIdentityCredential(managedIdentityClientId));
+                        }
                     }
                 }
                 else
