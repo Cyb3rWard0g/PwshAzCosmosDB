@@ -6,7 +6,7 @@ PwshAzCosmosDB is a PowerShell binary module built using .NET Core and designed 
 
 `PwshAzCosmosDB` depends on the following NuGet packages:
 
-- [Azure.Identity](https://www.nuget.org/packages/Microsoft.Azure.Cosmos/) (Version 1.10.0)
+- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity/) (Version 1.10.0)
 - [Microsoft.Azure.Cosmos](https://www.nuget.org/packages/Microsoft.Azure.Cosmos/) (Version 3.35.3)
 - [PowerShellStandard.Library](https://www.nuget.org/packages/PowerShellStandard.Library/) (Version 7.0.0-preview.1)
 - [dnMerge](https://www.nuget.org/packages/dnMerge/) (Version 0.5.15)

@@ -1,19 +1,13 @@
 # Developer Notes
 
-## Create Project Directory
+## Create .NET Project
 
 ```
 $module = 'PwshAzCosmosDB'
 
-New-Item -Path $module -Type Directory  
+dotnet new classlib -n $module
 
 Set-Location $module
-```
-
-## Create .NET Project
-
-```
-dotnet new classlib -n $module
 ```
 
 ## Set SDK Version
@@ -27,7 +21,7 @@ dotnet new globaljson --sdk-version 7.0.400
 ```
 dotnet add package PowerShellStandard.Library --version 7.0.0-preview.1
 dotnet add package Microsoft.Azure.Cosmos
-dotnet add package Microsoft.PowerShell.SDK
+dotnet add package Azure.Identity
 ```
 
 ## Create Solution File
